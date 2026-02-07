@@ -307,7 +307,32 @@ export const useMyBooks = () => {
     }, []);
 
     const addBook = () => { loadBooks(); }; // Just trigger reload
-    const removeBook = () => { loadBooks(); }; // Just trigger reload
+    const removeBook = async (bookId: string) => {
+        const token = localStorage.getItem("token");
+        const user = localStorage.getItem("user");
+
+        if (!token || !user) return;
+
+        try {
+            const userId = JSON.parse(user).id;
+
+            await fetch(
+                `http://127.0.0.1:5000/api/users/${userId}/favorites/${bookId}`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            // Update UI ngay, không cần gọi lại API
+            setMyBooks(prev => prev.filter(b => b._id !== bookId));
+        } catch (err) {
+            console.error("Failed to remove book", err);
+        }
+    };
+
 
     return { myBooks, loading, addBook, removeBook, refetch: loadBooks };
 };
