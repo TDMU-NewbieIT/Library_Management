@@ -1,11 +1,13 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getApiUrl } from '@/hooks/useBooks';
 
 interface User {
   id: string;
   name: string;
   email: string;
+  avatar?: string;
   role?: string;
 }
 
@@ -14,13 +16,15 @@ interface AuthContextType {
   loading: boolean;
   login: (token: string, userData: User) => void;
   logout: () => void;
+  updateUser: (updatedData: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   login: () => {},
-  logout: () => {}
+  logout: () => {},
+  updateUser: () => {}
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -53,13 +57,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(userData);
   };
 
+  const updateUser = (updatedData: Partial<User>) => {
+    if (!user) return;
+    const newUser = { ...user, ...updatedData };
+    setUser(newUser);
+    localStorage.setItem('user', JSON.stringify(newUser));
+  };
+
   /* Add useEffect to validate/refresh session */
   useEffect(() => {
     async function refreshUser() {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const res = await fetch('http://127.0.0.1:5000/api/auth/me', {
+          const res = await fetch(getApiUrl('auth/me'), {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (res.ok) {
@@ -70,6 +81,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 id: freshUserData._id,
                 name: freshUserData.name,
                 email: freshUserData.email,
+                avatar: freshUserData.avatar,
                 role: freshUserData.role
             });
             // Also update localStorage to keep it fresh
@@ -77,6 +89,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 id: freshUserData._id,
                 name: freshUserData.name,
                 email: freshUserData.email,
+                avatar: freshUserData.avatar,
                 role: freshUserData.role
             }));
           } else {
@@ -94,7 +107,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

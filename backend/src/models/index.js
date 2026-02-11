@@ -72,6 +72,8 @@ const newsSchema = new mongoose.Schema({
   imageUrl: String,
   author: { type: String, default: 'Ban quản trị' },
   tags: [String],
+  type: { type: String, enum: ['news', 'event', 'notice', 'newbook'], default: 'news' },
+  isPinned: { type: Boolean, default: false },
   isPublished: { type: Boolean, default: true }
 }, { timestamps: true });
 

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 import Image from 'next/image';
+import { getApiUrl } from '@/hooks/useBooks';
 
 interface BookContent {
     title: string;
@@ -34,7 +35,7 @@ export default function Reader() {
 
         const fetchContent = async () => {
              try {
-                const response = await fetch(`http://127.0.0.1:5000/api/books/${id}/read`);
+                const response = await fetch(getApiUrl(`books/${id}/read`));
                 if (!response.ok) {
                     throw new Error('Failed to load content');
                 }
@@ -154,7 +155,7 @@ export default function Reader() {
                                 <Image 
                                     src={content.chapters[currentChapter].image!.startsWith('http') 
                                         ? content.chapters[currentChapter].image! 
-                                        : `http://127.0.0.1:5000${content.chapters[currentChapter].image!.startsWith('/') ? '' : '/'}${content.chapters[currentChapter].image!}`} 
+                                        : getApiUrl(content.chapters[currentChapter].image!)} 
                                     alt="Chapter illustration" 
                                     fill 
                                     className="object-cover transition-transform duration-700 group-hover:scale-105"

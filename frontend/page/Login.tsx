@@ -12,7 +12,7 @@ export default function Login() {
   } = useAuthActions();
 
   return (
-    <div className="min-h-[75vh] flex items-center justify-center px-6 pt-10 pb-6">
+    <div className="min-h-[85vh] flex items-center justify-center px-6 pt-32 pb-12">
       <div className="max-w-[380px] w-full bg-white dark:bg-zinc-900 p-8 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-xl">
         <div className="mb-10 text-center">
              <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Đăng nhập</h1>

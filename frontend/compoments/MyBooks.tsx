@@ -52,15 +52,6 @@ export default function MyBooks() {
                 ) : (
                   <div className="w-full h-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 font-serif italic text-xs">NO IMAGE</div>
                 )}
-                <div className="absolute top-4 right-4 z-10">
-                  <button 
-                    onClick={() => removeBook(book._id)}
-                    className="p-2 bg-white/10 backdrop-blur-md text-white rounded-xl hover:bg-red-500 transition-colors shadow-lg"
-                    title="Xóa khỏi kho"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"/></svg>
-                  </button>
-                </div>
               </div>
               
               <div className="flex-grow space-y-3 px-2">
@@ -75,17 +66,25 @@ export default function MyBooks() {
               </div>
 
               <div className="mt-8 px-2 space-y-3 pt-6 border-t border-zinc-50 dark:border-zinc-800">
+                <div className="grid grid-cols-2 gap-3">
+                  <Link 
+                    href={`/books/${book.bookId}`} 
+                    className="py-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-xl font-bold text-[10px] uppercase tracking-widest text-center block hover:bg-indigo-600 transition-all shadow-lg"
+                  >
+                    Đọc sách
+                  </Link>
+                  <button 
+                    onClick={() => removeBook(book._id)}
+                    className="py-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl font-bold text-[10px] uppercase tracking-widest text-center hover:bg-red-600 hover:text-white transition-all border border-red-100 dark:border-red-900/30"
+                  >
+                    Xóa sách
+                  </button>
+                </div>
                 <Link 
                   href={`/books/${book.bookId}`} 
-                  className="w-full py-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-xl font-bold text-xs uppercase tracking-widest text-center block hover:bg-indigo-600 dark:hover:bg-indigo-50 hover:text-white dark:hover:text-indigo-600 transition-all shadow-lg shadow-zinc-100 dark:shadow-none"
+                  className="w-full py-2.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 rounded-xl font-bold text-[9px] uppercase tracking-widest text-center block hover:border-zinc-400 transition-all"
                 >
-                  Tiếp tục đọc
-                </Link>
-                <Link 
-                  href={`/books/${book.bookId}`} 
-                  className="w-full py-3 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 rounded-xl font-bold text-[10px] uppercase tracking-widest text-center block hover:border-zinc-400 transition-all"
-                >
-                  Chi tiết tác phẩm
+                  Xem chi tiết
                 </Link>
               </div>
             </div>

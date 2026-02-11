@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
+import { getApiUrl } from '@/hooks/useBooks';
 
 // --- BookModal Component ---
 
@@ -57,8 +58,8 @@ export function BookModal({ isOpen, onClose, onSuccess, initialData }: BookModal
             };
 
             const url = initialData
-                ? `http://127.0.0.1:5000/api/books/${initialData.bookId}`
-                : 'http://127.0.0.1:5000/api/books';
+                ? getApiUrl(`books/${initialData.bookId}`)
+                : getApiUrl('books');
 
             const method = initialData ? 'PUT' : 'POST';
 
@@ -245,6 +246,7 @@ export function NewsModal({ isOpen, onClose, onSuccess, initialData }: NewsModal
         title: '',
         summary: '',
         content: '',
+        imageUrl: '',
         author: 'Admin'
     });
     const [loading, setLoading] = useState(false);
@@ -255,10 +257,11 @@ export function NewsModal({ isOpen, onClose, onSuccess, initialData }: NewsModal
                 title: initialData.title || '',
                 summary: initialData.summary || '',
                 content: initialData.content || '',
+                imageUrl: initialData.imageUrl || '',
                 author: initialData.author || 'Admin'
             });
         } else {
-            setFormData({ title: '', summary: '', content: '', author: 'Admin' });
+            setFormData({ title: '', summary: '', content: '', imageUrl: '', author: 'Admin' });
         }
     }, [initialData, isOpen]);
 
@@ -269,8 +272,8 @@ export function NewsModal({ isOpen, onClose, onSuccess, initialData }: NewsModal
         setLoading(true);
         try {
             const url = initialData
-                ? `http://127.0.0.1:5000/api/news/${initialData._id}`
-                : 'http://127.0.0.1:5000/api/news';
+                ? getApiUrl(`news/${initialData._id}`)
+                : getApiUrl('news');
 
             const method = initialData ? 'PUT' : 'POST';
 
@@ -287,7 +290,7 @@ export function NewsModal({ isOpen, onClose, onSuccess, initialData }: NewsModal
             if (res.ok) {
                 onSuccess();
                 onClose();
-                if (!initialData) setFormData({ title: '', summary: '', content: '', author: 'Admin' });
+                if (!initialData) setFormData({ title: '', summary: '', content: '', imageUrl: '', author: 'Admin' });
             } else {
                 alert(initialData ? 'Lỗi khi cập nhật tin' : 'Lỗi khi đăng tin');
             }

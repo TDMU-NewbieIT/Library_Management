@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { getApiUrl } from "@/hooks/useBooks";
 import { useAdminAuth, useAdminData, useAdminActions, useAuditLogs, User } from "@/hooks/useAdmin";
 import AdminLogin from "./AdminLogin";
 
@@ -20,6 +22,28 @@ export default function SystemAdmin() {
 
   const [activeTab, setActiveTab] = useState<'staff' | 'audit'>('staff');
   const [userSearchText, setUserSearchText] = useState("");
+
+  const handleResetDatabase = async () => {
+    if (!confirm('Bạn có chắc chắn muốn reset toàn bộ kho sách và bản tin về trạng thái mẫu? Hành động này sẽ xóa dữ liệu hiện tại và không thể hoàn tác.')) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(getApiUrl('system/reset'), {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) {
+            alert(data.message);
+            window.location.reload();
+        } else {
+            alert(data.message || 'Lỗi khi reset hệ thống');
+        }
+    } catch (error) {
+        console.error('Reset database failed:', error);
+        alert('Lỗi kết nối máy chủ');
+    }
+  };
 
   if (!mounted) return null;
 
@@ -73,19 +97,33 @@ export default function SystemAdmin() {
                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                     <span className="text-[10px] font-bold text-green-500 uppercase">Hệ thống an toàn</span>
                  </div>
-                 <div className="flex items-center gap-3">
-                    <div className="text-right hidden md:block">
+                     <div className="flex items-center gap-3">
+                    <Link 
+                        href="/"
+                        className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl font-bold transition-all text-xs"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                        Trang chủ
+                    </Link>
+                    <button 
+                        onClick={handleResetDatabase}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-900/20 hover:bg-red-900/40 text-red-500 rounded-xl font-bold transition-all text-xs border border-red-900/30"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        Reset Dữ liệu
+                    </button>
+                    <div className="text-right hidden md:block border-l border-zinc-800 pl-6">
                         <div className="text-sm font-bold text-white">Administrator</div>
                         <div className="text-[10px] text-zinc-500">Super User</div>
                     </div>
                     <button 
                         onClick={handleLogout}
                         className="w-9 h-9 bg-zinc-800 hover:bg-red-900/30 text-zinc-400 hover:text-red-500 rounded-lg flex items-center justify-center transition-colors"
-                        title="Đăng xuất"
+                        title="Đăng xuất hệ thống"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                     </button>
-                 </div>
+                </div>
             </div>
         </header>
 

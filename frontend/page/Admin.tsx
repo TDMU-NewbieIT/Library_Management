@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import NextImage from "next/image";
+import Link from "next/link";
 import { useAdminAuth, useAdminData, useAdminActions, User, News } from "@/hooks/useAdmin";
 import { useActivityTracker } from "@/hooks/useAuth";
 import { Book } from "@/hooks/useBooks";
@@ -65,7 +66,7 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-library pt-8 pb-12 px-4 text-zinc-800 dark:text-zinc-200">
+    <div className="min-h-screen bg-library pt-36 pb-12 px-4 text-zinc-800 dark:text-zinc-200">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row gap-8">
             {/* Sidebar */}
@@ -75,7 +76,7 @@ export default function Admin() {
                       {currentUserRole === 'admin' ? 'Quản trị viên' : 'Thủ thư'}
                     </h2>
                     <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mb-4">
-                       {currentUserRole === 'admin' ? 'System Admin' : 'Librarian'}
+                       {currentUserRole === 'admin' ? 'System Administrator' : 'Librarian'}
                     </p>
                     <div className="flex items-center gap-2 mb-4">
                       <span className="relative flex h-3 w-3">
@@ -108,12 +109,14 @@ export default function Admin() {
                     {/* Library Operations Section */}
                     <div className="space-y-4">
                         <div className="px-5 text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-6">Vận hành</div>
-                        <button 
-                            onClick={() => setActiveTab('users')}
-                            className={`w-full text-left px-5 py-3 rounded-xl font-medium transition-colors ${activeTab === 'users' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none' : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-700'}`}
-                        >
-                            📚 Quản lý Độc giả
-                        </button>
+                        {currentUserRole === 'admin' && (
+                            <button 
+                                onClick={() => setActiveTab('users')}
+                                className={`w-full text-left px-5 py-3 rounded-xl font-medium transition-colors ${activeTab === 'users' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none' : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-700'}`}
+                            >
+                                📚 Quản lý Độc giả
+                            </button>
+                        )}
                         <button 
                             onClick={() => setActiveTab('books')}
                             className={`w-full text-left px-5 py-3 rounded-xl font-medium transition-colors ${activeTab === 'books' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none' : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-700'}`}
@@ -129,6 +132,13 @@ export default function Admin() {
                     </div>
 
 
+                    <Link 
+                        href="/"
+                        className="w-full text-left px-5 py-3 rounded-xl font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all flex items-center gap-2 mb-2 italic text-xs border border-zinc-200 dark:border-zinc-700"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                        Trang chủ (Thoát Quản lý)
+                    </Link>
                 </nav>
             </div>
 
@@ -139,8 +149,8 @@ export default function Admin() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fadeIn">
                         {/* Stats Cards with Visual Enhancements */}
                         <div 
-                            onClick={() => setActiveTab('users')}
-                            className="bg-white dark:bg-zinc-800 p-6 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-700 relative overflow-hidden group cursor-pointer hover:scale-[1.02] hover:shadow-md transition-all duration-300"
+                            onClick={() => currentUserRole === 'admin' && setActiveTab('users')}
+                            className={`bg-white dark:bg-zinc-800 p-6 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-700 relative overflow-hidden group transition-all duration-300 ${currentUserRole === 'admin' ? 'cursor-pointer hover:scale-[1.02] hover:shadow-md' : 'cursor-default'}`}
                         >
                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                 <svg className="w-12 h-12 text-zinc-800 dark:text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
@@ -413,9 +423,11 @@ export default function Admin() {
                                                     >
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                                                     </button>
-                                                    <button onClick={() => handleDeleteUser(u._id)} className="text-red-400 hover:bg-red-50 p-1.5 rounded-lg border border-transparent hover:border-red-100 transition-colors" title="Xóa độc giả">
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                    </button>
+                                                    {currentUserRole === 'admin' && (
+                                                        <button onClick={() => handleDeleteUser(u._id)} className="text-red-400 hover:bg-red-50 p-1.5 rounded-lg border border-transparent hover:border-red-100 transition-colors" title="Xóa độc giả">
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                        </button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
@@ -599,7 +611,7 @@ export default function Admin() {
                                                         <button onClick={() => handleEditBook(b)} className="text-blue-500 hover:bg-blue-50 p-1.5 rounded-lg border border-transparent hover:border-blue-100 transition-colors" title="Sửa">
                                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                                         </button>
-                                                        <button onClick={() => handleDeleteBook(b.bookId)} className="text-red-500 hover:bg-red-50 p-1.5 rounded-lg border border-transparent hover:border-red-100 transition-colors" title="Xóa">
+                                                        <button onClick={() => handleDeleteBook(b._id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded-lg border border-transparent hover:border-red-100 transition-colors" title="Xóa">
                                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                                         </button>
                                                     </td>
@@ -685,7 +697,7 @@ export default function Admin() {
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414 a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                                 </button>
                                                 <button onClick={() => handleDeleteNews(n._id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded-lg border border-transparent hover:border-red-100 transition-colors" title="Xóa">
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                                 </button>
                                             </td>
                                         </tr>

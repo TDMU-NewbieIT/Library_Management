@@ -1,4 +1,4 @@
-const { User, Borrow, ActivityLog } = require('../models/index');
+const { User, Book, Borrow, ActivityLog } = require('../models/index');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -129,6 +129,34 @@ exports.removeFavorite = async (req, res) => {
   }
 };
 
+exports.getFavorites = async (req, res) => {
+  try {
+    const userId = req.params.userId || req.user.userId;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "Không tìm thấy người dùng" });
+    
+    // Get favorite bookIds
+    const favoriteBookIds = user.favoriteBooks || [];
+
+    // Get active borrowings using the user's ObjectId
+    const activeBorrows = await Borrow.find({ 
+      userId: user._id, 
+      status: { $in: ['borrowing', 'overdue'] } 
+    }).select('bookId');
+    
+    const borrowedBookIds = activeBorrows.map(b => b.bookId);
+
+    // Combine and deduplicate
+    const allBookIds = [...new Set([...favoriteBookIds, ...borrowedBookIds])];
+
+    // Find all books that have these bookIds
+    const books = await Book.find({ bookId: { $in: allBookIds } });
+    res.json(books);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // --- Stats & Tracking Section ---
 
 exports.getStats = async (req, res) => {
@@ -169,6 +197,23 @@ exports.updateHeartbeat = async (req, res) => {
     const user = await User.findByIdAndUpdate(req.params.userId, { lastActive: Date.now() }, { new: true });
     if (!user) return res.status(404).json({ message: "Không tìm thấy người dùng" });
     res.json({ message: "Heartbeat updated" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.updateAvatar = async (req, res) => {
+  try {
+    const { avatar } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.params.userId, 
+      { avatar }, 
+      { new: true }
+    ).select('-password');
+    
+    if (!user) return res.status(404).json({ message: "Không tìm thấy người dùng" });
+    
+    res.json({ message: "Cập nhật ảnh đại diện thành công!", avatar: user.avatar });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

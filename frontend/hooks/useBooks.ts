@@ -1,6 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+// --- API Config ---
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000/api";
+
+export const getApiUrl = (endpoint: string) => {
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+    return `${API_BASE_URL}/${cleanEndpoint}`;
+};
 
 // --- Types ---
 
@@ -62,6 +69,9 @@ export interface NewsItem {
     content: string;
     createdAt: string;
     author: string;
+    imageUrl?: string;
+    isPinned?: boolean;
+    type?: 'news' | 'event' | 'notice' | 'newbook';
 }
 
 // --- Hooks ---
@@ -78,8 +88,11 @@ export const useBooks = () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch("http://127.0.0.1:5000/api/books");
-            if (!response.ok) throw new Error("Failed to fetch books");
+            const response = await fetch(getApiUrl("books"));
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || "Failed to fetch books");
+            }
             const data = await response.json();
             setBooks(Array.isArray(data) ? data : []);
         } catch (err) {
@@ -109,7 +122,7 @@ export const useBookDetail = (bookId: string | undefined, userId: string | undef
     const fetchComments = useCallback(async () => {
         if (!bookId) return;
         try {
-            const res = await fetch(`http://127.0.0.1:5000/api/books/${bookId}/comments`);
+            const res = await fetch(getApiUrl(`books/${bookId}/comments`));
             if (res.ok) {
                 const data = await res.json();
                 setComments(data);
@@ -121,7 +134,7 @@ export const useBookDetail = (bookId: string | undefined, userId: string | undef
         if (!bookId) return;
         setLoading(true);
         try {
-            const response = await fetch(`http://127.0.0.1:5000/api/books/${bookId}`);
+            const response = await fetch(getApiUrl(`books/${bookId}`));
             if (!response.ok) throw new Error("Không tìm thấy tác phẩm");
             setBook(await response.json());
         } catch (err: unknown) { 
@@ -133,7 +146,7 @@ export const useBookDetail = (bookId: string | undefined, userId: string | undef
         if (!userId || !bookId) return;
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`http://127.0.0.1:5000/api/users/${userId}`, {
+            const res = await fetch(getApiUrl(`users/${userId}`), {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -149,8 +162,8 @@ export const useBookDetail = (bookId: string | undefined, userId: string | undef
         try {
             const method = isFavorite ? 'DELETE' : 'POST';
             const url = isFavorite 
-                ? `http://127.0.0.1:5000/api/users/${userId}/favorites/${book.bookId}`
-                : `http://127.0.0.1:5000/api/users/${userId}/favorites`;
+                ? getApiUrl(`users/${userId}/favorites/${book.bookId}`)
+                : getApiUrl(`users/${userId}/favorites`);
             const token = localStorage.getItem('token');
             const res = await fetch(url, {
                 method, 
@@ -170,7 +183,7 @@ export const useBookDetail = (bookId: string | undefined, userId: string | undef
         if (!book || !userId) return { success: false, message: "Dữ liệu không hợp lệ" };
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch('http://127.0.0.1:5000/api/borrows', {
+            const res = await fetch(getApiUrl('borrows'), {
                 method: 'POST', 
                 headers: { 
                     'Content-Type': 'application/json',
@@ -192,7 +205,7 @@ export const useBookDetail = (bookId: string | undefined, userId: string | undef
         if (!text.trim() || !userId) return;
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`http://127.0.0.1:5000/api/books/${bookId}/comments`, {
+            const res = await fetch(getApiUrl(`books/${bookId}/comments`), {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -224,7 +237,7 @@ export const useBorrow = (userId: string | undefined, initialFilter = 'all') => 
         const token = localStorage.getItem('token');
         setLoading(true);
         try {
-            const res = await fetch(`http://127.0.0.1:5000/api/borrows/user/${userId}?status=${filter}`, {
+            const res = await fetch(getApiUrl(`borrows/user/${userId}?status=${filter}`), {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!res.ok) throw new Error("Failed to fetch borrow history");
@@ -239,7 +252,7 @@ export const useBorrow = (userId: string | undefined, initialFilter = 'all') => 
     const handleReturn = async (borrowId: string) => {
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`http://127.0.0.1:5000/api/borrows/${borrowId}/return`, {
+            const res = await fetch(getApiUrl(`borrows/${borrowId}/return`), {
                 method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -306,7 +319,7 @@ export const useMyBooks = () => {
             try {
                 const userId = JSON.parse(user).id;
                 // Fetch Favorites (My Books Shelf)
-                const favRes = await fetch(`http://127.0.0.1:5000/api/users/${userId}/favorites`, {
+                const favRes = await fetch(getApiUrl(`users/${userId}/favorites`), {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
@@ -345,7 +358,7 @@ export const useMyBooks = () => {
             const userId = JSON.parse(user).id;
 
             await fetch(
-                `http://127.0.0.1:5000/api/users/${userId}/favorites/${bookId}`,
+                getApiUrl(`users/${userId}/favorites/${bookId}`),
                 {
                     method: "DELETE",
                     headers: {
@@ -376,7 +389,7 @@ export const useNews = (limit?: number) => {
     const fetchNews = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await fetch('http://127.0.0.1:5000/api/news');
+            const res = await fetch(getApiUrl('news'));
             if (!res.ok) throw new Error("Failed to fetch news");
             let data = await res.json();
             if (limit) data = data.slice(0, limit);
@@ -408,7 +421,7 @@ export const useSearch = (query = "", initialGenre = "", initialSort = "title-as
             if (query) params.append("query", query);
             if (genre) params.append("genre", genre);
             params.append("sortBy", sortBy);
-            const res = await fetch(`http://127.0.0.1:5000/api/books/search?${params}`);
+            const res = await fetch(getApiUrl(`books/search?${params}`));
             if (!res.ok) throw new Error("Failed to fetch search results");
             setBooks(await res.json());
         } catch (err: unknown) { 
@@ -419,4 +432,35 @@ export const useSearch = (query = "", initialGenre = "", initialSort = "title-as
     useEffect(() => { fetchResults(); }, [fetchResults]);
 
     return { books, loading, error, genre, setGenre, sortBy, setSortBy, refetch: fetchResults };
+};
+
+/**
+ * Hook to manage author information fetched from the consolidated API
+ */
+export const useAuthors = () => {
+    const [authors, setAuthors] = useState<Author[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchAuthors = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await fetch(getApiUrl("authors"));
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || "Failed to fetch authors");
+            }
+            const data = await response.json();
+            setAuthors(Array.isArray(data) ? data : []);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "An unknown error occurred");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => { fetchAuthors(); }, [fetchAuthors]);
+
+    return { authors, loading, error, refetch: fetchAuthors };
 };

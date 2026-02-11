@@ -15,6 +15,8 @@ interface NewsItem {
   content: string;
   createdAt: string;
   author?: string;
+  type?: 'news' | 'event' | 'notice' | 'newbook';
+  isPinned?: boolean;
 }
 
 export default function Home() {
@@ -85,7 +87,75 @@ export default function Home() {
         </div>
       </div>
 
-      <main className="w-full max-w-[1200px] px-4 sm:px-6 relative z-30 mt-16 mb-20">
+      {/* News Section - Moved to Top Prioritization */}
+      <section className="w-full bg-white dark:bg-zinc-950/20 py-16 relative z-30 reveal">
+        <div className="max-w-[1240px] mx-auto px-6">
+            <div className="flex flex-col md:flex-row items-end justify-between mb-12 gap-4">
+                <div className="space-y-2">
+                    <h2 
+                        data-font="serif"
+                        className="text-4xl md:text-5xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase"
+                    >
+                        Tin tức & <span className="text-indigo-600 italic">Sự kiện</span>
+                    </h2>
+                    <p className="text-zinc-500 dark:text-zinc-400 font-medium max-w-lg">
+                        Cập nhật những thông báo mới nhất, sự kiện văn hóa và các tác phẩm vừa ra mắt tại LiteraryHub.
+                    </p>
+                </div>
+                <Link href="/news" className="group flex items-center gap-2 px-6 py-3 bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all">
+                    Xem tất cả bản tin
+                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {news.length > 0 ? (
+                  news.map((item: NewsItem, idx: number) => (
+                    <Link href="/news" key={item._id} className={`group block ${idx === 0 ? "md:col-span-2 lg:col-span-1" : ""}`}>
+                      <div className="bg-white dark:bg-zinc-900 p-8 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-zinc-100 dark:border-zinc-800 hover:shadow-[0_20px_50px_rgba(79,70,229,0.1)] hover:-translate-y-2 transition-all duration-500 h-full flex flex-col group-hover:border-indigo-500/30">
+                          <div className="flex items-center justify-between mb-6">
+                              <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest ${
+                                  item.type === 'event' ? "bg-purple-50 text-purple-600" :
+                                  item.type === 'notice' ? "bg-amber-50 text-amber-600" :
+                                  "bg-indigo-50 text-indigo-600"
+                              }`}>
+                                  {item.type === 'event' ? "Sự kiện" : 
+                                   item.type === 'notice' ? "Thông báo" : "Tin tức"}
+                              </span>
+                              {item.isPinned && (
+                                  <svg className="w-4 h-4 text-indigo-600 fill-indigo-600" viewBox="0 0 24 24"><path d="M16 9V4l1 1V2H7v3l1-1v5L6 12v2h5v7l1 1 1-1v-7h5v-2l-2-3z"/></svg>
+                              )}
+                          </div>
+                          <h3 className="text-xl font-black mb-4 text-zinc-900 dark:text-white group-hover:text-indigo-600 transition-colors uppercase tracking-tight line-clamp-2 leading-tight">
+                              {item.title}
+                          </h3>
+                          <p className="text-zinc-500 dark:text-zinc-400 line-clamp-3 mb-8 flex-1 font-medium leading-relaxed">
+                              {item.summary || item.content}
+                          </p>
+                          <div className="mt-auto flex items-center justify-between pt-6 border-t border-zinc-50 dark:border-zinc-800/50">
+                              <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-[10px] font-black text-indigo-600">
+                                      {item.author?.[0] || "A"}
+                                  </div>
+                                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{item.author || "Admin"}</span>
+                              </div>
+                              <span className="text-[10px] font-bold text-zinc-400">
+                                  {new Date(item.createdAt).toLocaleDateString('vi-VN')}
+                              </span>
+                          </div>
+                      </div>
+                    </Link>
+                  ))
+                ) : (
+                   <div className="col-span-full py-20 text-center bg-zinc-50 dark:bg-zinc-900/50 rounded-[40px] border border-dashed border-zinc-200 dark:border-zinc-800">
+                       <p className="text-zinc-400 font-bold uppercase tracking-widest text-xs italic">Đang cập nhật những câu chuyện mới...</p>
+                   </div>
+                )}
+            </div>
+        </div>
+      </section>
+
+      <main className="w-full max-w-[1240px] px-6 relative z-30 mt-8 mb-20 space-y-24">
         
         {/* Quick Service Guides */}
         <div className="reveal">
@@ -136,7 +206,7 @@ export default function Home() {
              ))}
         </div>
 
-        <div className="mb-20 reveal delay-400">
+        <div id="catalog" className="mb-20 reveal delay-400">
             <h2 
                 data-font="serif"
                 className="text-2xl font-black text-[var(--title-color)] mb-8 flex items-center gap-4 uppercase tracking-tighter"
@@ -148,42 +218,6 @@ export default function Home() {
         </div>
       </main>
       
-      {/* News Section */}
-      <section className="w-full bg-zinc-50 dark:bg-zinc-950/50 py-16 mt-12 border-t border-zinc-100 dark:border-zinc-800 reveal delay-500">
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
-            <div className="relative mb-16 text-center">
-                <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-zinc-200 dark:via-zinc-800 to-transparent -z-10"></div>
-                <h2 
-                    data-font="serif"
-                    className="inline-block bg-zinc-50 dark:bg-zinc-950 px-10 text-4xl md:text-5xl font-[1000] text-zinc-900 dark:text-white tracking-tighter uppercase relative"
-                >
-                    Tin tức & <span className="text-indigo-600 italic">Sự kiện</span>
-                    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-24 h-1.5 bg-indigo-600 rounded-full"></div>
-                </h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {news.length > 0 ? (
-                  news.map((item: NewsItem) => (
-                    <Link href="/news" key={item._id} className="block group">
-                      <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-lg border border-zinc-100 dark:border-zinc-800 hover:-translate-y-1 transition-transform h-full flex flex-col group-hover:border-indigo-500">
-                          <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md w-fit mb-4">Tin tức</span>
-                          <h3 className="text-lg font-bold mb-2 text-zinc-800 dark:text-zinc-100 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{item.title}</h3>
-                          <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-3 mb-4 flex-1">
-                              {item.summary || item.content}
-                          </p>
-                          <div className="mt-auto text-xs text-zinc-400 pt-4 border-t border-zinc-50 dark:border-zinc-800">
-                              {new Date(item.createdAt).toLocaleDateString('vi-VN')} • Bởi {item.author || "Admin"}
-                          </div>
-                      </div>
-                    </Link>
-                  ))
-                ) : (
-                   <p className="text-center w-full col-span-3 text-zinc-500">Chưa có tin tức nào.</p>
-                )}
-            </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="w-full bg-indigo-600 py-12 reveal">
         <div className="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-8">

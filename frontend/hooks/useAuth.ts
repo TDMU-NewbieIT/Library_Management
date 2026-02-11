@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { getApiUrl } from "./useBooks";
 
 // --- Types ---
 
@@ -56,7 +57,7 @@ export const useAuthActions = () => {
         setLoading(true);
 
         try {
-            const res = await fetch('http://127.0.0.1:5000/api/auth/login', {
+            const res = await fetch(getApiUrl('auth/login'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
@@ -90,7 +91,7 @@ export const useAuthActions = () => {
 
         setLoading(true);
         try {
-            const res = await fetch('http://127.0.0.1:5000/api/auth/register', {
+            const res = await fetch(getApiUrl('auth/register'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email, password, phone, address, idCard }),
@@ -143,10 +144,10 @@ export const useProfile = (userId: string | undefined) => {
         setError(null);
         try {
             const [profileRes, statsRes] = await Promise.all([
-                fetch(`http://127.0.0.1:5000/api/users/${userId}`, {
+                fetch(getApiUrl(`users/${userId}`), {
                     headers: { 'Authorization': `Bearer ${token}` }
                 }),
-                fetch(`http://127.0.0.1:5000/api/users/${userId}/stats`, {
+                fetch(getApiUrl(`users/${userId}/stats`), {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
             ]);
@@ -177,7 +178,7 @@ export const useProfile = (userId: string | undefined) => {
         if (!userId) return { success: false, message: 'No user ID' };
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`http://127.0.0.1:5000/api/users/${userId}`, {
+            const res = await fetch(getApiUrl(`users/${userId}`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(editForm)
@@ -193,9 +194,34 @@ export const useProfile = (userId: string | undefined) => {
         }
     };
 
+    const { user, updateUser } = useAuth();
+
+    const updateAvatar = async (avatar: string) => {
+        if (!userId) return { success: false, message: 'No user ID' };
+        const token = localStorage.getItem('token');
+        try {
+            const res = await fetch(getApiUrl(`users/${userId}/avatar`), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ avatar })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setProfile(prev => prev ? { ...prev, avatar: data.avatar } : null);
+                // Correctly merge the avatar update into the existing user state
+                if (user) {
+                    updateUser({ ...user, avatar: data.avatar });
+                }
+                return { success: true, avatar: data.avatar };
+            } else return { success: false, message: data.message || 'Avatar update failed' };
+        } catch (err: unknown) {
+            return { success: false, message: err instanceof Error ? err.message : "An error occurred" };
+        }
+    };
+
     return {
         profile, stats, loading, error, isEditing, setIsEditing,
-        editForm, setEditForm, handleUpdate, refetch: fetchData
+        editForm, setEditForm, handleUpdate, updateAvatar, refetch: fetchData
     };
 };
 
@@ -228,7 +254,7 @@ export const useSettings = (userId: string | undefined) => {
         setIsLoading(true);
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`http://127.0.0.1:5000/api/users/${userId}/password`, {
+            const res = await fetch(getApiUrl(`users/${userId}/password`), {
                 method: "PUT",
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                 body: JSON.stringify({
@@ -268,7 +294,7 @@ export const useActivityTracker = (userId: string | undefined) => {
         if (!userId || isIdleRef.current) return;
         const token = localStorage.getItem('token');
         try {
-            await fetch(`http://127.0.0.1:5000/api/users/${userId}/heartbeat`, {
+            await fetch(getApiUrl(`users/${userId}/heartbeat`), {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

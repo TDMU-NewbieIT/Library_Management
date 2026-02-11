@@ -36,7 +36,7 @@ html, body {
 
 /* Force headings to respect theme variables */
 h1, h2, h3, h4, h5, h6 {
-  color: var(--title-color) !important;
+  color: var(--title-color);
 }
 
 /* Animations */
@@ -134,6 +134,62 @@ body {
   transform: translateY(0);
   filter: blur(0);
   pointer-events: auto;
+}
+
+/* Custom Animations */
+@keyframes dust {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(10px, -15px) rotate(5deg);
+  }
+  50% {
+    transform: translate(-15px, 10px) rotate(-10deg);
+  }
+  75% {
+    transform: translate(20px, 10px) rotate(8deg);
+  }
+}
+
+.animate-dust {
+  animation: dust 15s ease-in-out infinite;
+}
+
+.bg-dot-grid {
+  background-image: radial-gradient(#4f46e5 0.5px, transparent 0.5px);
+  background-size: 24px 24px;
+}
+
+.bg-wax-seal {
+  background: radial-gradient(circle at 30% 30%, #b91c1c, #7f1d1d);
+  box-shadow: inset -2px -2px 5px rgba(0,0,0,0.4), 2px 2px 5px rgba(0,0,0,0.3);
+  position: relative;
+}
+
+.bg-wax-seal::after {
+  content: "LH";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(0,0,0,0.2);
+  font-family: serif;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.archive-stamp {
+  border: 3px solid #b91c1c;
+  color: #b91c1c;
+  padding: 4px 12px;
+  text-transform: uppercase;
+  font-weight: 1000;
+  font-family: monospace;
+  transform: rotate(-15deg);
+  opacity: 0.6;
+  border-radius: 4px;
+  letter-spacing: 2px;
 }
 
 /* Staggered delays */

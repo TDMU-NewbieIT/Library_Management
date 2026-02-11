@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Book } from "./useBooks";
+import { getApiUrl } from "./useBooks";
 
 // --- Types ---
 
@@ -84,9 +85,37 @@ export const useAdminAuth = () => {
     useEffect(() => {
         const timer = setTimeout(() => {
             setMounted(true);
-            const session = localStorage.getItem('admin_session') === 'true' && !!localStorage.getItem('token');
-            const role = (localStorage.getItem('admin_role') as 'admin' | 'librarian' | 'user') || 'user';
-            setIsAdminLoggedIn(session);
+            
+            // Check for specific admin session OR main session with high role
+            const adminSession = localStorage.getItem('admin_session') === 'true';
+            const token = localStorage.getItem('token');
+            const mainUserRaw = localStorage.getItem('user');
+            
+            let role: 'admin' | 'librarian' | 'user' = 'user';
+            let isLoggedIn = false;
+
+            if (token) {
+                // Try to derive from main session first
+                if (mainUserRaw) {
+                    try {
+                        const mainUser = JSON.parse(mainUserRaw);
+                        if (mainUser.role === 'admin' || mainUser.role === 'librarian') {
+                            role = mainUser.role;
+                            isLoggedIn = true;
+                        }
+                    } catch (e) {
+                        console.error("Failed to parse main user data", e);
+                    }
+                }
+                
+                // Fallback to specific admin keys if main session check didn't pass or was ambiguous
+                if (!isLoggedIn && adminSession) {
+                    role = (localStorage.getItem('admin_role') as 'admin' | 'librarian' | 'user') || 'user';
+                    isLoggedIn = true;
+                }
+            }
+
+            setIsAdminLoggedIn(isLoggedIn);
             setCurrentUserRole(role);
         }, 0);
         return () => clearTimeout(timer);
@@ -156,15 +185,15 @@ export const useAdminData = (isAdminLoggedIn: boolean) => {
         setLoading(true);
         try {
             const [statsRes, usersRes, booksRes, newsRes, borrowsRes] = await Promise.all([
-                fetch("http://127.0.0.1:5000/api/admin/stats", {
+                fetch(getApiUrl("admin/stats"), {
                     headers: { 'Authorization': `Bearer ${token}` }
                 }),
-                fetch("http://127.0.0.1:5000/api/admin/users", {
+                fetch(getApiUrl("admin/users"), {
                     headers: { 'Authorization': `Bearer ${token}` }
                 }),
-                fetch("http://127.0.0.1:5000/api/books"),
-                fetch("http://127.0.0.1:5000/api/news"),
-                fetch("http://127.0.0.1:5000/api/borrows", {
+                fetch(getApiUrl("books")),
+                fetch(getApiUrl("news")),
+                fetch(getApiUrl("borrows"), {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
             ]);
@@ -212,7 +241,7 @@ export const useAdminActions = (
     const handleRoleChange = async (userId: string, newRole: string) => {
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`http://127.0.0.1:5000/api/admin/users/${userId}/role`, {
+            const res = await fetch(getApiUrl(`admin/users/${userId}/role`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ role: newRole })
@@ -228,7 +257,7 @@ export const useAdminActions = (
         if (!confirm('Bạn có chắc chắn muốn xóa người dùng này?')) return;
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`http://127.0.0.1:5000/api/admin/users/${userId}`, {
+            const res = await fetch(getApiUrl(`admin/users/${userId}`), {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -238,15 +267,20 @@ export const useAdminActions = (
     };
 
     const handleDeleteBook = async (id: string) => {
-        if(!confirm('Xóa sách này?')) return;
+        if(!confirm('Bạn có chắc chắn muốn xóa sách này?')) return;
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`http://127.0.0.1:5000/api/books/${id}`, { 
+            const res = await fetch(getApiUrl(`books/${id}`), { 
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (res.ok) setBooks(prev => prev.filter(b => b.bookId !== id));
-            else alert('Bạn không có quyền thực hiện hành động này');
+            if (res.ok) {
+                setBooks(prev => prev.filter(b => b._id !== id));
+                alert('Xóa sách thành công');
+            } else {
+                const data = await res.json().catch(() => ({}));
+                alert(data.message || 'Bạn không có quyền thực hiện hành động này');
+            }
         } catch { alert('Lỗi xóa sách'); }
     };
 
@@ -254,7 +288,7 @@ export const useAdminActions = (
         if(!confirm('Xóa tin tức này?')) return;
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`http://127.0.0.1:5000/api/news/${id}`, { 
+            const res = await fetch(getApiUrl(`news/${id}`), { 
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -282,7 +316,7 @@ export const useAdminActions = (
         if (!confirm('Xác nhận thu hồi/trả sách này?')) return;
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`http://127.0.0.1:5000/api/borrows/${borrowId}/return`, {
+            const res = await fetch(getApiUrl(`borrows/${borrowId}/return`), {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -319,7 +353,7 @@ export const useAuditLogs = (isEnabled: boolean) => {
                 page: page.toString(), category, user: userSearch
             });
             const token = localStorage.getItem('token');
-            const res = await fetch(`http://127.0.0.1:5000/api/admin/logs?${params}`, {
+            const res = await fetch(getApiUrl(`admin/logs?${params}`), {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {

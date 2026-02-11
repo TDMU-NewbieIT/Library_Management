@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
@@ -9,7 +9,7 @@ import { useProfile } from '@/hooks/useAuth';
 export default function Profile() {
   const { user } = useAuth();
   const {
-      profile, stats, loading, isEditing, setIsEditing, editForm, setEditForm, handleUpdate
+      profile, stats, loading, isEditing, setIsEditing, editForm, setEditForm, handleUpdate, updateAvatar
   } = useProfile(user?.id);
 
   type TabType = 'overview' | 'history' | 'favorites' | 'settings';
@@ -23,6 +23,29 @@ export default function Profile() {
     } else {
         alert(result.message || 'Có lỗi xảy ra');
     }
+  };
+
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Ảnh quá lớn (vui lòng chọn ảnh dưới 10MB)');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        updateAvatar(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+    // Reset input to allow same file selection
+    e.target.value = '';
   };
 
   const formatDate = (dateStr: string) => {
@@ -57,54 +80,102 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pb-24 relative bg-library overflow-x-hidden">
-      {/* Immersive Atmospheric Overlays */}
+      {/* Immersive Atmospheric Overlays (Outer Background) */}
       <div className="absolute top-0 left-0 w-full h-[800px] bg-gradient-to-b from-zinc-950/80 via-zinc-950/20 to-transparent z-0"></div>
       <div className="absolute top-0 left-0 w-full h-full bg-white/40 dark:bg-black/40 z-0"></div>
 
-      <div className="max-w-6xl mx-auto px-4 relative z-10 pt-[180px]">
-        <div className="bg-white/80 dark:bg-zinc-900/40 backdrop-blur-2xl rounded-[40px] shadow-[0_32px_120px_-16px_rgba(0,0,0,0.3)] border border-white/40 dark:border-zinc-800/50 p-10 mb-10 overflow-hidden relative group">
-          {/* Subtle Accent Light */}
-          <div className="absolute -top-24 -right-24 w-64 h-64 bg-indigo-500/20 rounded-full blur-[100px] pointer-events-none group-hover:bg-indigo-500/30 transition-colors"></div>
-          <div className="flex flex-col md:flex-row items-center gap-8 mb-8">
-            {/* Avatar */}
-            <div className="w-32 h-32 rounded-3xl bg-indigo-600 flex items-center justify-center text-white text-5xl font-black shadow-lg">
-                {profile?.name?.charAt(0).toUpperCase() || 'U'}
+      <div className="max-w-6xl mx-auto px-4 relative z-10 pt-[80px]">
+        <div className="!bg-white rounded-[40px] shadow-[0_32px_120px_-16px_rgba(0,0,0,0.1)] border border-zinc-100 p-10 mb-10 overflow-hidden relative group">
+          {/* Flex Wrapper for Avatar and Info */}
+          <div className="flex flex-col md:flex-row items-center gap-10 mb-8">
+            {/* Avatar Section */}
+            <div className="relative group/avatar shrink-0">
+              <div className="w-40 h-40 rounded-[40px] bg-indigo-600 flex items-center justify-center text-white text-6xl font-black shadow-2xl overflow-hidden relative border-4 border-white dark:border-zinc-800">
+                  {profile?.avatar ? (
+                    <Image src={profile.avatar} alt={profile.name || "User"} fill className="object-cover" unoptimized />
+                  ) : (
+                    profile?.name?.charAt(0).toUpperCase() || 'U'
+                  )}
+                  
+                  {/* Always Visible Edit Button for all devices */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleAvatarClick(); }}
+                    title="Đổi ảnh đại diện"
+                    className="absolute bottom-2 right-2 w-10 h-10 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all z-20 border-2 border-white dark:border-zinc-800 group/edit"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 012-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </button>
+
+                  {/* Photo Edit Overlay (Hover-only helper) */}
+                  <div 
+                    onClick={handleAvatarClick}
+                    className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-all flex flex-col items-center justify-center cursor-pointer backdrop-blur-[2px] z-10 hidden md:flex"
+                  >
+                    <span className="text-[10px] font-black text-white uppercase tracking-widest">Đổi ảnh</span>
+                  </div>
+              </div>
+              <input 
+                ref={fileInputRef}
+                type="file" 
+                className="hidden" 
+                accept="image/*" 
+                title="Tải lên ảnh đại diện"
+                onChange={handleFileUpload}
+              />
             </div>
             
-            {[1,2,3,4].map(i => (
-              <div key={i} className="w-12 h-12 rounded-full border-4 border-zinc-950 bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-400 overflow-hidden relative">
-                 <Image 
-                    src={`https://i.pravatar.cc/100?img=${i+20}`} 
-                    alt="user avatar" 
-                    fill 
-                    className="object-cover opacity-60" 
-                 />
-              </div>
-            ))}
             {/* Main Info */}
             <div className="flex-1 text-center md:text-left">
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-4 mb-3">
-                    <h1 className="text-[36px] font-black text-zinc-900 dark:text-white tracking-tighter leading-tight">
+                    <h1 className="text-[42px] font-black text-zinc-900 dark:text-white tracking-tighter leading-none mb-1">
                         {profile?.name}
                     </h1>
                     <div className="mt-1">
-                      <span className="px-4 py-1.5 bg-indigo-600 text-white text-[13px] font-black uppercase rounded-lg shadow-lg shadow-indigo-100 dark:shadow-none">
+                      <span className="px-4 py-1.5 bg-indigo-600 text-white text-[11px] font-black uppercase rounded-lg shadow-lg">
                           {profile?.role === 'admin' ? 'Quản trị viên' : profile?.role === 'librarian' ? 'Thủ thư' : 'Thành viên'}
                       </span>
                     </div>
                 </div>
-                <div className="text-[16px] font-bold text-zinc-500 dark:text-zinc-400 mb-5">{profile?.email}</div>
-                <div className="flex items-center justify-center md:justify-start gap-2 text-[12px] font-bold text-zinc-400 uppercase tracking-widest bg-zinc-50 dark:bg-zinc-800/50 w-fit px-4 py-2 rounded-xl border border-zinc-100 dark:border-zinc-800">
-                   THAM GIA: <span className="text-zinc-800 dark:text-zinc-200 ml-1">{stats?.memberSince ? formatDate(stats.memberSince) : 'N/A'}</span>
+                <div className="flex flex-col gap-4">
+                  <div className="text-[16px] font-bold text-zinc-500 dark:text-zinc-400">{profile?.email}</div>
+                  <div className="flex items-center justify-center md:justify-start gap-2 text-[11px] font-black text-indigo-500 uppercase tracking-[0.2em] bg-indigo-50 dark:bg-indigo-900/20 w-fit px-5 py-2 rounded-xl border border-indigo-100 dark:border-indigo-900/30">
+                     HỘI VIÊN TỪ: <span className="text-zinc-900 dark:text-white ml-2">{stats?.memberSince ? formatDate(stats.memberSince) : 'N/A'}</span>
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-6">
+                   {/* Avatar Presets Library */}
+                   <div className="flex items-center gap-1.5 bg-white dark:bg-zinc-900 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm mr-2">
+                     <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest px-2">Mẫu:</span>
+                     {[1,2,3,4].map(i => (
+                        <button 
+                          key={i} 
+                          title={`Chọn ảnh mẫu ${i}`}
+                          onClick={() => updateAvatar(`https://i.pravatar.cc/150?img=${i+20}`)}
+                          className="w-8 h-8 rounded-xl border border-zinc-100 dark:border-zinc-800 overflow-hidden hover:scale-110 active:scale-90 transition-all shadow-sm relative"
+                        >
+                           <Image 
+                              src={`https://i.pravatar.cc/100?img=${i+20}`} 
+                              alt={`Mẫu ${i}`} 
+                              fill 
+                              className="object-cover" 
+                              unoptimized
+                           />
+                        </button>
+                      ))}
+                   </div>
+
+                   <button
+                    onClick={() => { setActiveTab('settings'); setIsEditing(true); }}
+                    className="px-6 py-3 bg-zinc-900 dark:bg-zinc-200 text-white dark:text-zinc-900 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl"
+                   >
+                    Cài đặt hồ sơ
+                   </button>
                 </div>
             </div>
-            
-            <button
-              onClick={() => { setActiveTab('settings'); setIsEditing(true); }}
-              className="px-6 py-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 rounded-xl font-bold text-sm hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all active:scale-95"
-            >
-              Sửa hồ sơ
-            </button>
           </div>
 
           {/* Tab Navigation */}
@@ -132,13 +203,13 @@ export default function Profile() {
                                 { count: stats?.favoriteCount, label: 'Yêu thích', color: 'text-pink-600' },
                                 { count: stats?.booksRead, label: 'Đã đọc', color: 'text-green-600' }
                             ].map((s, i) => (
-                                <div key={i} className="p-7 bg-zinc-50 dark:bg-zinc-950/50 rounded-2xl border border-zinc-100 dark:border-zinc-800 transition-all hover:border-indigo-500/30 group">
+                                <div key={i} className="p-7 !bg-white rounded-2xl border border-zinc-100 transition-all hover:border-indigo-500/30 group">
                                     <div className={`text-[32px] font-black ${s.color} mb-1 group-hover:scale-105 transition-transform`}>{s.count || 0}</div>
                                     <div className="text-[12px] font-black text-zinc-500 uppercase tracking-widest">{s.label}</div>
                                 </div>
                             ))}
                         </div>
-                        <div className="p-6 bg-zinc-50 dark:bg-zinc-950/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                        <div className="p-6 !bg-white rounded-2xl border border-zinc-100">
                             <h3 className="text-xs font-black text-zinc-900 dark:text-white uppercase tracking-widest mb-4">Giới thiệu</h3>
                             <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">
                                 {profile?.bio || 'Chưa có thông tin giới thiệu.'}
@@ -147,7 +218,7 @@ export default function Profile() {
                     </div>
 
                     <div className="space-y-6">
-                        <div className="p-8 bg-white/50 dark:bg-zinc-950/30 backdrop-blur-md rounded-3xl border border-white/20 dark:border-zinc-800/50 shadow-sm">
+                        <div className="p-8 !bg-white rounded-3xl border border-zinc-100 shadow-sm">
                             <h3 className="font-black text-[20px] mb-6 text-zinc-900 dark:text-white uppercase tracking-tighter border-b border-zinc-100/50 dark:border-zinc-800/50 pb-4">Mục tiêu đọc sách</h3>
                             <div className="relative pt-1">
                                 <div className="flex mb-4 items-center justify-between">
@@ -161,11 +232,12 @@ export default function Profile() {
                                 </div>
                                  <div 
                                     className="overflow-hidden h-3 mb-4 text-xs flex rounded-full bg-zinc-100/50 dark:bg-zinc-800/50"
-                                    style={{ '--progress': `${Math.min(((stats?.booksRead || 0) / (stats?.readingGoal || 12)) * 100, 100)}%` } as React.CSSProperties}
                                  >
                                     <div 
-                                        className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-indigo-600 rounded-full transition-all duration-1000 ease-out w-[var(--progress)]"
+                                        className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-indigo-600 rounded-full transition-all duration-1000 ease-out"
+                                        style={{ '--progress-width': `${Math.min(((stats?.booksRead || 0) / (stats?.readingGoal || 12)) * 100, 100)}%` } as React.CSSProperties}
                                     >
+                                        <div className="w-[var(--progress-width)] h-full bg-inherit rounded-full"></div>
                                     </div>
                                 </div>
                             </div>

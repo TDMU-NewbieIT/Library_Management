@@ -80,7 +80,13 @@ exports.getAllBooks = async (req, res) => {
 
 exports.getBookById = async (req, res) => {
   try {
-    const book = await Book.findOne({ bookId: req.params.id });
+    const { id } = req.params;
+    let book;
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      book = await Book.findById(id);
+    } else {
+      book = await Book.findOne({ bookId: id });
+    }
     if (!book) return res.status(404).json({ message: "Book not found" });
     res.status(200).json(book);
   } catch (error) {
@@ -126,7 +132,14 @@ exports.createBook = async (req, res) => {
 
 exports.updateBook = async (req, res) => {
   try {
-    const updatedBook = await Book.findOneAndUpdate({ bookId: req.params.id }, req.body, { new: true });
+    const { id } = req.params;
+    let updatedBook;
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      updatedBook = await Book.findByIdAndUpdate(id, req.body, { new: true });
+    } else {
+      updatedBook = await Book.findOneAndUpdate({ bookId: id }, req.body, { new: true });
+    }
+    
     if (!updatedBook) return res.status(404).json({ message: "Book not found" });
     await createLog({ user: req.user?.name || 'Admin', userId: req.user?._id || updatedBook._id, action: 'UPDATE_BOOK', category: 'BOOK', detail: `Cập nhật thông tin sách: ${updatedBook.title} (${updatedBook.bookId})`, status: 'SUCCESS' });
     res.status(200).json(updatedBook);
@@ -137,11 +150,24 @@ exports.updateBook = async (req, res) => {
 
 exports.deleteBook = async (req, res) => {
   try {
-    const deletedBook = await Book.findOneAndDelete({ bookId: req.params.id });
-    if (!deletedBook) return res.status(404).json({ message: "Book not found" });
+    const { id } = req.params;
+    let deletedBook;
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      deletedBook = await Book.findByIdAndDelete(id);
+    } else {
+      deletedBook = await Book.findOneAndDelete({ bookId: id });
+    }
+
+    if (!deletedBook) {
+        console.warn(`Attempted to delete book but not found: ${id}`);
+        return res.status(404).json({ message: "Book not found" });
+    }
+    
     await createLog({ user: req.user?.name || 'Admin', userId: req.user?._id || deletedBook._id, action: 'DELETE_BOOK', category: 'BOOK', detail: `Xóa sách: ${deletedBook.title} (${deletedBook.bookId})`, status: 'SUCCESS' });
+    console.log(`Successfully deleted book: ${deletedBook.title} (${deletedBook.bookId})`);
     res.status(200).json({ message: "Book deleted successfully" });
   } catch (error) {
+    console.error(`Error deleting book ${req.params.id}:`, error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -166,6 +192,28 @@ exports.searchBooks = async (req, res) => {
     }
     const books = await Book.find(filter).sort(sort);
     res.json(books);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getUniqueAuthors = async (req, res) => {
+  try {
+    const authors = await Book.aggregate([
+      {
+        $group: {
+          _id: "$author.name",
+          data: { $first: "$author" }
+        }
+      },
+      {
+        $replaceRoot: { newRoot: "$data" }
+      },
+      {
+        $sort: { name: 1 }
+      }
+    ]);
+    res.json(authors);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -292,7 +340,7 @@ exports.getAllBorrows = async (req, res) => {
 
 exports.getAllNews = async (req, res) => {
   try {
-    const news = await News.find().sort({ createdAt: -1 });
+    const news = await News.find().sort({ isPinned: -1, createdAt: -1 });
     res.json(news);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -322,8 +370,8 @@ exports.createNews = async (req, res) => {
 
 exports.updateNews = async (req, res) => {
   try {
-    const { title, content, summary, imageUrl, author, tags } = req.body;
-    const news = await News.findByIdAndUpdate(req.params.id, { title, content, summary, imageUrl, author, tags }, { new: true });
+    const { title, content, summary, imageUrl, author, tags, type, isPinned, isPublished } = req.body;
+    const news = await News.findByIdAndUpdate(req.params.id, { title, content, summary, imageUrl, author, tags, type, isPinned, isPublished }, { new: true });
     if (!news) return res.status(404).json({ message: "News not found" });
     await createLog({ user: req.user?.name || 'Admin', userId: req.user?._id || news._id, action: 'UPDATE_NEWS', category: 'NEWS', detail: `Cập nhật tin tức: ${news.title}`, status: 'SUCCESS' });
     res.json(news);

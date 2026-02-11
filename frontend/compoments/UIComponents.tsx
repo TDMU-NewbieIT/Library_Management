@@ -208,29 +208,33 @@ export function SearchBar() {
   };
 
   return (
-    <form onSubmit={handleSearch} className="relative">
-      <div className={`flex items-center transition-all duration-300 ${isExpanded ? 'w-48' : 'w-10'}`}>
+    <form onSubmit={handleSearch} className="relative z-50">
+      <div className={`flex items-center transition-all duration-500 overflow-hidden ${
+        isExpanded ? 'w-64 bg-white/10 dark:bg-zinc-900/40 backdrop-blur-xl border border-white/20 dark:border-zinc-800' : 'w-10 bg-transparent border-transparent'
+      } rounded-full`}>
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
           title="Tìm kiếm"
-          className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+          className={`p-2.5 rounded-full transition-all duration-500 ${
+            isExpanded ? 'text-indigo-400' : 'text-inherit hover:bg-white/10'
+          }`}
         >
-          <svg className="w-5 h-5 text-zinc-600 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
         </button>
         
-        {isExpanded && (
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm sách, tác giả..."
-            className="flex-1 px-3 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-800 dark:text-zinc-100"
-            autoFocus
-          />
-        )}
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Tra cứu sách..."
+          className={`bg-transparent outline-none text-xs font-black uppercase tracking-widest text-white transition-all duration-500 ${
+            isExpanded ? 'w-full px-2 opacity-100 pr-4' : 'w-0 opacity-0 pointer-events-none'
+          }`}
+          onBlur={() => !searchQuery && setIsExpanded(false)}
+        />
       </div>
     </form>
   );

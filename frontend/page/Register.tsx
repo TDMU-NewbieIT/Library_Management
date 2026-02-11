@@ -16,7 +16,7 @@ export default function Register() {
   } = useAuthActions();
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-6 pt-20 pb-10">
+    <div className="min-h-[85vh] flex items-center justify-center px-6 pt-32 pb-12">
       <div className="max-w-[460px] w-full bg-white dark:bg-zinc-900 p-8 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-xl">
         <div className="mb-10 text-center">
              <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Đăng ký</h1>

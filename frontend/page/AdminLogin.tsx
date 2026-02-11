@@ -1,5 +1,6 @@
 "use client";
 import { useState } from 'react';
+import { getApiUrl } from '@/hooks/useBooks';
 
 interface AdminLoginProps {
   onLogin: (role: 'admin' | 'librarian') => void;
@@ -18,7 +19,7 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
     const loginEmail = username === 'admin' ? 'admin@library.com' : username;
     
     try {
-      const res = await fetch('http://127.0.0.1:5000/api/auth/login', {
+      const res = await fetch(getApiUrl('auth/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: loginEmail, password }),
